@@ -161,3 +161,25 @@ class World:
             measurements.append(self.r.measure())
         self.rotate_robot_to(original_bearing)
         return measurements
+
+#---------------------- cw7 ---------------
+
+    def path_plan(self,index):
+        if index == 0:
+            return [1,2,3,4,0]
+        elif index == 1:
+            return [2,3,4,0,1]
+        elif index == 2:
+            return [3,4,0,1,2]
+        elif index == 3:
+            return [2,1,0,4,3]
+        elif index == 4:
+            return [3,2,1,0,4]
+        else:
+            print("World, ERROR: invalid landmark number, please enter landmark between 0 to 4")
+            return []
+
+    def navigate_waypoints(self,waypoints):
+        for waypoint in waypoints:
+            x,y = lm.positions[waypoint]
+            self.move_robot_to_slam(x,y)
