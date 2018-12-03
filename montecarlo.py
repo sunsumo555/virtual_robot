@@ -32,7 +32,7 @@ def find_actual_distance(x,y,theta):
     min_dist = 9999
     for wall in walls:
         dist = distance_to_wall(x,y,theta,wall)
-
+        #print("dist = "+str(dist))
         if dist < min_dist:
             if is_valid_distance(dist,wall,x,y,theta):
                 min_dist = dist
@@ -46,7 +46,7 @@ def is_valid_distance(dist,wall,x,y,theta):
     if dist < 0:
         return False
     x_intersect = x+cos(theta)*dist
-    y_intersect = x+sin(theta)*dist
+    y_intersect = y+sin(theta)*dist
     if not in_line(x_intersect,y_intersect,wall):
         return False
     return True

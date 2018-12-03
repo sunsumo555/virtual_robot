@@ -8,9 +8,10 @@ import math
 from math import pi, atan2
 
 class World:
-    def __init__(self,starting_x=0, starting_y=0, enlargement_factor = 1, x_padding = 0, y_padding = 0):
+    def __init__(self,starting_x=0, starting_y=0, starting_theta=0, enlargement_factor = 1, x_padding = 0, y_padding = 0):
         self.r = robot.Robot(starting_x = starting_x,
                              starting_y = starting_y,
+                             starting_theta = starting_theta,
                              n_particles = 20,
                              motion_sigma_distance=2.0, 
                              motion_sigma_angle=1.0*pi/180.0,
@@ -98,8 +99,19 @@ class World:
 
         self.move_robot_forward(distance)
 
-#---------------------------------
-        
+#------------------- cw6 -------------
+def rotate_robot_to(self,theta):
+    self.rotate_robot(theta - self.r.particle_cloud.avg_theta)
+
+def measure_around(self,points = 120):
+    measurements = []
+    thetas = np.linspace(-1*pi,pi*(1.0-2.0/points),points)
+    for theta in thetas:
+        self.rotate_robot_to(theta)
+        measurements.append(self.r.measure())
+    return measurements
+
+def find_landmark
 
 
 
@@ -120,43 +132,7 @@ class World:
 
 
     
-#=============================================================
-    
-    def scan_sonar_and_update(self):
-        for theta in np.linspace(-1*math.pi,math.pi,7):
-            # rotate the sonar by 30 degree from -180 to 180 (7 steps)
-            self.update_particles_at_angle(theta)
-            
-        self.r.rotate_sonar_to(0.0)
-        
-    def scan_sonar_and_update_batch(self, weights_only = False):
-        print("actual robot at x=",self.actual_x,"y=",self.actual_y,"t=",self.actual_t)
-        thetas = []
-        measurements = []
-        
-        print(">>> taking measurements")
-        
-        self.r.rotate_sonar_to(-1*math.pi)
-        
-        for theta in np.linspace(-1*math.pi,5.0/6.0*math.pi,4):
-            # rotate the sonar by 30 degree from -180 to 120 (6 steps)
-            thetas.append(theta)
-            
-            self.r.rotate_sonar_to(theta)
-            measurements.append(self.get_robot_measurement())
-                     
-        print("===== measurement summary =====")
-        print(np.array(thetas)*180/math.pi)
-        print(measurements)
-        print("===============================")
-        
-        self.r.rotate_sonar_to(0.0)
-        print(">>> updating particles")
-        #the first measurement is often errorneous
-        self.r.particle_cloud.update_cloud_from_measurement_batch(thetas,measurements,self.measurement_var, weights_only)
-        print(">>> drawing particles")
-        self.draw_particles()
-        print(">>> done localizing")
+
 
 #============= book keeping ====================
 

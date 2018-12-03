@@ -9,10 +9,10 @@ from math import pi
 
 class Robot:
 
-    def __init__(self,starting_x=0, starting_y=0, n_particles=100, motion_sigma_distance=2.0, 
+    def __init__(self,starting_x=0, starting_y=0, starting_theta=0, n_particles=100, motion_sigma_distance=2.0, 
         motion_sigma_angle=1.0*pi/180.0,rotation_sigma_angle=2.0*pi/180.0):
         # register starting position
-        self.particle_cloud = cloud.Cloud(x = starting_x, y = starting_y,
+        self.particle_cloud = cloud.Cloud(x = starting_x, y = starting_y, theta=starting_theta,
                                             n_particles = n_particles,
                                             motion_sigma_distance=motion_sigma_distance,
                                             motion_sigma_angle=motion_sigma_angle,
