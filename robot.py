@@ -34,7 +34,7 @@ class Robot:
     def where_am_i(self):
         return self.particle_cloud.avg_x, self.particle_cloud.avg_y, self.particle_cloud.avg_theta
 
-    def rotate_on_spot(self, angle):
+    def rotate(self, angle):
         #rotates ccw
         self.particle_cloud.rotate(angle)
 
@@ -51,7 +51,7 @@ class Robot:
             wall, dist = mc.find_relevant_wall(self.where_am_i(),mc.walls)
             return dist + random.gauss(0,self.measurement_sigma)
 
-    def travel_forwards(self, distance_cm):
+    def drive(self, distance_cm):
         #drives the robot forward
         self.particle_cloud.drive(distance_cm)
 
@@ -59,6 +59,6 @@ class Robot:
         # measure
         measurement = self.measure()
         # update weights
-        self.particle_cloud.update_weights()
+        self.particle_cloud.update_weights(measurement)
         # resample
         self.particle_cloud.resample()

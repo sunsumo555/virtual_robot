@@ -18,15 +18,15 @@ class Particle:
         return "x = "+str(self.x)+", y = "+str(self.y)+", theta = "+str(self.theta)
 
     def drive(self, distance):
-        noisy_distance = distance + gauss(0,self.motion_sigma_distance)
+        noisy_distance = distance + gauss(0,self.motion_sigma_distance)*(distance/40)
         delta_x = noisy_distance * cos(self.theta)
         delta_y = noisy_distance * sin(self.theta)
         self.x += delta_x
         self.y += delta_y
-        self.theta += gauss(0,self.motion_sigma_angle)*distance
+        self.theta += gauss(0,self.motion_sigma_angle)*(distance/40)
 
     def rotate(self, theta):
-        new_theta = self.theta + theta + gauss(0,self.rotation_sigma_angle)
+        new_theta = self.theta + theta + gauss(0,self.rotation_sigma_angle)*(2.0*theta/pi)
         self.theta = new_theta
 
     def renormalize_theta(self):

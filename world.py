@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import robot
 import math
-from math import pi
+from math import pi, atan2
 
 class World:
     def __init__(self,starting_x=0, starting_y=0, enlargement_factor = 1, x_padding = 0, y_padding = 0):
@@ -52,31 +52,44 @@ class World:
     def get_robot_measurement(self):
         return self.r.measure()
 
+
+#-------------cw 5 ---------------
     def localize_robot(self):
         self.r.localize()
 
+    def move_robot_to(self,target_x,target_y):
+        x,y,theta = self.r.where_am_i()
+        dx = target_x - x
+        dy = target_y - y
+        distance = (dx**2 + dy**2)**0.5
+
+        target_theta = atan2(y,x)
+        dtheta = target_theta - theta
+
+        r.rotate(dtheta)
+        r.drive(distance)
+
 #---------------------------------
-    
-    def update_particle_weights(self):
-        measurement_distance = self.get_robot_measurement()
-        self.r.particle_cloud.update_weights(measurement_distance, self.measurement_var)
-        self.draw_particles()
-    
-    def update_particle_all(self):
-        measurement_distance = self.get_robot_measurement()
-        self.r.particle_cloud.update_cloud_from_measurement(measurement_distance,self.measurement_var)        
-        self.draw_particles()
         
-    def update_particles_at_angle(self,theta):
-        self.r.rotate_sonar_to(theta)
-        time.sleep(1)
-        self.update_particle_all()
-        
-    def display_img(self):
-        self.draw_map()
-        self.draw_particles()
-        plt.imshow(self.display)
-           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def move_robot_to(self,target_x,target_y):
         """
         Navigates to the given waypoint and stops.
@@ -270,3 +283,8 @@ class World:
         else:
             print_vector = [(p.x + self.x_padding, p.y + self.y_padding, p.theta) for p in self.r.particle_cloud.particles]
             cv2.circle(self.display,(self.enlargement_factor*p.x + self.x_padding,self.enlargement_factor*p.y + self.y_padding), 255, -1)
+
+    def display_img(self):
+        self.draw_map()
+        self.draw_particles()
+        plt.imshow(self.display)

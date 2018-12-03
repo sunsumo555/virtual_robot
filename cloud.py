@@ -4,6 +4,7 @@ from random import gauss, uniform
 import numpy as np
 import montecarlo as mc
 import particle
+import copy
 
 class Cloud:
     def __init__(self, n_particles=100, x=0, y=0, theta=0,
@@ -37,9 +38,9 @@ class Cloud:
         self.update_average_position()
 
     def __str__(self):
-        for p in self.particles:
-            print(p)
-        return "====== done printing particles ======="
+        for p,w in zip(self.particles,self.weights):
+            print("x = "+str(p.x)+", y = "+str(p.y)+", theta = "+str(p.theta) + ", w = "+str(w))
+        return str("====== done printing particles =======")
 
     def update_average_position(self):
         """
@@ -68,6 +69,32 @@ class Cloud:
 
         while self.avg_theta <= -1*pi:
             self.avg_theta += 2*pi
+
+# ---------------- cw5 ---------------------
+
+    def update_weights(self,measurement):
+        for p,w in zip(self.particles,self.weights):
+            w = mc.find_likelihood(measurement,p.x,p.y,p.theta)
+
+        self.weights = self.weights / np.sum(self.weights)
+        # resample
+        self.resample()
+
+    def resample(self):
+        new_particles = []
+        for i in range(len(self.weights)):
+            weight = random.random()
+            index = 0
+            while True:
+                weights -= weights[index]
+                if weights <= 0:
+                    print("picked index "+str(index)+" where weight is "+self.weight[index])
+                    new_particle.append(copy.deepcopy(self.particles[index]))
+                    break
+                index += 1
+        self.particles = new_particle
+        self.weights = 1.0/self.n_particles * np.ones(self.n_particles)
+
 
 #========================================
 
@@ -181,44 +208,6 @@ class Cloud:
 
     def resample_np(self):
         self.particles = np.random.choice(self.particles, self.n_particles ,p=self.weights)
-
-    def resample(self):
-        #print("RESAMPLING")
-        #print("STATE: particles before")
-        #self.print_all_cloud()
-        #print("=========================")
-
-        new_particles = []
-        acc_weights = []
-        running_total = 0
-        for weight in range(len(self.weights)):
-            running_total += self.weights[weight]
-            acc_weights.append(running_total)
-        acc_weights[-1] = 1.0    # Enforces the list of weights to sum to 1. This avoids rounding errors.
-
-        for i in range(len(self.weights)):
-            rand_particle = np.random.random()
-            if rand_particle < min(self.weights):
-                rand_particle = max(self.weights) # prevents the random particle being less than any weight.
-            for particle in range(len(self.particles)):
-                if rand_particle < acc_weights[particle]:
-                    break
-
-            #create new particle instead of copying
-            print("resampling: picked particle %s"%(particle-1))
-            new_particle = WorldPosition(x = self.particles[particle - 1].x,
-                                         y = self.particles[particle - 1].y,
-                                         theta = self.particles[particle - 1].theta,
-                                         motion_sigma_distance = self.particles[particle - 1].motion_sigma_distance,
-                                         motion_sigma_angle = self.particles[particle - 1].motion_sigma_angle,
-                                         rotation_sigma_angle = self.particles[particle - 1].rotation_sigma_angle)
-
-            #new_particles.append(self.particles[particle - 1])
-            new_particles.append(new_particle)
-        self.particles = new_particles
-        #print("STATE: particles after")
-        #self.print_all_cloud()
-        #print("=========================")
 
     def covariance(self):
         x_vector = np.array([particle.x for particle in self.particles])
