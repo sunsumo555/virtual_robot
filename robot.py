@@ -48,7 +48,8 @@ class Robot:
         if good_measure < 0.2:
             return 255
         else:
-            wall, dist = mc.find_relevant_wall(self.where_am_i(),mc.walls)
+            x,y,theta = self.where_am_i()
+            dist = mc.find_actual_distance(x,y,theta)
             return dist + random.gauss(0,self.measurement_sigma)
 
     def drive(self, distance_cm):

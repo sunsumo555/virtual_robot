@@ -11,7 +11,7 @@ class World:
     def __init__(self,starting_x=0, starting_y=0, enlargement_factor = 1, x_padding = 0, y_padding = 0):
         self.r = robot.Robot(starting_x = starting_x,
                              starting_y = starting_y,
-                             n_particles = 100,
+                             n_particles = 20,
                              motion_sigma_distance=2.0, 
                              motion_sigma_angle=1.0*pi/180.0,
                              rotation_sigma_angle=2.0*pi/180.0)
@@ -39,19 +39,22 @@ class World:
         self.display = np.zeros((250*self.enlargement_factor,250*self.enlargement_factor))
 
     def move_robot_forward(self,d):
-        self.r.travel_forwards(d)
-        self.draw_particles()
+        self.r.drive(d)
         self.actual_x += d*math.cos(self.actual_t)
         self.actual_y += d*math.sin(self.actual_t)
+        plt.figure()
+        plt.title("moved "+str(d))
+        self.display_img()
         
     def rotate_robot(self,radian):
-        self.r.rotate_on_spot(radian)
-        self.draw_particles()
+        self.r.rotate(radian)
         self.actual_t += radian
+        plt.figure()
+        plt.title("rotated "+str(radian*180.0/pi))
+        self.display_img()
 
     def get_robot_measurement(self):
         return self.r.measure()
-
 
 #-------------cw 5 ---------------
     def localize_robot(self):
@@ -63,11 +66,37 @@ class World:
         dy = target_y - y
         distance = (dx**2 + dy**2)**0.5
 
-        target_theta = atan2(y,x)
+        target_theta = atan2(dy,dx)
         dtheta = target_theta - theta
 
-        r.rotate(dtheta)
-        r.drive(distance)
+        self.rotate_robot(dtheta)
+        self.move_robot_forward(distance)
+
+    def move_robot_to_slam(self,target_x,target_y):
+        x,y,theta = self.r.where_am_i()
+        dx = target_x - x
+        dy = target_y - y
+        distance = (dx**2 + dy**2)**0.5
+        target_theta = atan2(dy,dx)
+        dtheta = target_theta - theta
+
+        while distance > 10:
+            print("world: distance = "+str(distance))        
+
+            self.rotate_robot(dtheta)
+            self.move_robot_forward(10)
+            self.localize_robot()
+            
+            x,y,theta = self.r.where_am_i()
+            dx = target_x - x
+            dy = target_y - y
+            distance = (dx**2 + dy**2)**0.5
+            target_theta = atan2(dy,dx)
+            dtheta = target_theta - theta
+            print("destination at "+str(target_x)+", "+str(target_y))
+            print(self.r)    
+
+        self.move_robot_forward(distance)
 
 #---------------------------------
         
@@ -90,137 +119,8 @@ class World:
 
 
 
-    def move_robot_to(self,target_x,target_y):
-        """
-        Navigates to the given waypoint and stops.
-        :param target_x: World frame x coordinate of target in cm
-        :param target_y: World frame y coordinate of target in cm
-        """
-        # Convert coordinates into Robot frame
-        x_diff = target_x - self.r.particle_cloud.avg_x
-        y_diff = target_y - self.r.particle_cloud.avg_y
-        tol = 10**-3
-        
-        # if the distance is not that great, forget it
-        if abs(x_diff) < tol and abs(y_diff) < tol:
-            return None
-
-        world_frame_angle = math.atan2(y_diff,x_diff)
-        robot_frame_angle = world_frame_angle - self.r.particle_cloud.avg_theta
-        
-        if robot_frame_angle < -self.pi:
-            robot_frame_angle += 2*self.pi
-            
-        if robot_frame_angle > self.pi:
-            robot_frame_angle -= 2*self.pi
-
-        print("rotating " + str(robot_frame_angle * 180 / self.pi) + " degrees")
-        self.rotate_robot(robot_frame_angle,direction='ccw',use_slam=True)
-        print("rotated " + str(robot_frame_angle * 180 / self.pi) + " degrees")
-        #self.report_robot()
-
-        time.sleep(2)
-        travel_distance = math.sqrt(x_diff**2 + y_diff**2)
-
-        print("Moving forwards " + str(travel_distance) + " meters")
-        self.move_robot_forward(travel_distance,use_slam=False)
-        print("Moved forwards " + str(travel_distance) + " meters")
-        #self.report_robot()
-
-        time.sleep(2)
     
 #=============================================================
-
-    def move_robot_to_slam(self,target_x,target_y):
-        print("moving first half")
-        x,y,theta = self.r.where_am_i()
-        self.move_robot_to((target_x + x)/2.0,(target_y + y)/2.0)
-        time.sleep(2)
-        
-        print("localizing robot")
-        self.scan_sonar_and_update_batch()
-        time.sleep(2)
-        
-        print("moving second half")
-        self.move_robot_to(target_x,target_y)
-        time.sleep(2)
-        
-        self.scan_sonar_and_update_batch()
-                
-    def move_robot_to2(self,target_x,target_y, use_slam = False):
-        """
-        Navigates to the given waypoint and stops.
-        :param target_x: World frame x coordinate of target in cm
-        :param target_y: World frame y coordinate of target in cm
-        """
-        # Convert coordinates into Robot frame
-        x_diff = target_x - self.r.particle_cloud.avg_x
-        y_diff = target_y - self.r.particle_cloud.avg_y
-        tol = 10**-3
-        
-        # if the distance is not that great, forget it
-        if abs(x_diff) < tol and abs(y_diff) < tol:
-            return None
-
-        world_frame_angle = math.atan2(y_diff,x_diff)
-        robot_frame_angle = world_frame_angle - self.r.particle_cloud.avg_theta
-        
-        if robot_frame_angle < -self.pi:
-            robot_frame_angle += 2*self.pi
-            
-        if robot_frame_angle > self.pi:
-            robot_frame_angle -= 2*self.pi
-
-        print("rotating " + str(robot_frame_angle * 180 / self.pi) + " degrees")
-        self.rotate_robot(robot_frame_angle,direction='ccw',use_slam=True)
-        print("rotated " + str(robot_frame_angle * 180 / self.pi) + " degrees")
-        #self.report_robot()
-
-        time.sleep(self.sleep_time)
-        travel_distance = math.sqrt(x_diff**2 + y_diff**2)
-
-        if use_slam:
-            print("Moving forwards " + str(travel_distance) + " meters")
-            n_steps = 5.0
-            for i in range(int(n_steps)):
-                self.move_robot_forward(travel_distance/n_steps,use_slam = False)
-                self.update_particle_all() 
-                self.draw_particles()
-                time.sleep(1)
-                
-                current_x = self.r.particle_cloud.avg_x
-                current_y = self.r.particle_cloud.avg_y
-                current_theta = self.r.particle_cloud.avg_theta
-                print(">>> World_frame_angle = "+str(world_frame_angle)+" current_angle = "+str(current_theta) + " error = " + str(world_frame_angle - current_theta))
-                
-                if abs(world_frame_angle - current_theta) > 0.016:
-                    print(">>> Robot out of course, world_frame_angle = "+str(world_frame_angle)+" current_angle = "+str(current_theta))
-                    #self.move_robot_to(target_x,target_y, use_slam = False)
-                    self.rotate_robot(world_frame_angle - current_theta,direction='ccw',use_slam=False)
-                    time.sleep(1)
-                                        
-            print("Moved forwards " + str(travel_distance) + " meters")
-            
-            self.update_particle_all() 
-            self.draw_particles()
-            time.sleep(1)
-                
-            current_x = self.r.particle_cloud.avg_x
-            current_y = self.r.particle_cloud.avg_y
-            current_theta = self.r.particle_cloud.avg_theta
-            
-            distance_error = math.sqrt((target_x-current_x)**2 + (target_y - current_y)**2)
-            print("Performing final correction of " + str(distance_error) + " meters")
-            self.move_robot_forward(distance_error,use_slam=False)
-            print("Destination reached")
-            
-        else:
-            print("Moving forwards " + str(travel_distance) + " meters")
-            self.move_robot_forward(travel_distance,use_slam=False)
-            print("Moved forwards " + str(travel_distance) + " meters")
-            #self.report_robot()
-
-        time.sleep(self.sleep_time)
     
     def scan_sonar_and_update(self):
         for theta in np.linspace(-1*math.pi,math.pi,7):

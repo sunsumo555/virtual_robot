@@ -85,22 +85,6 @@ def angle_to_wall_normal(position, wall):
     denom = sqrt((ay-by)**2+(ax-bx)**2)
     return acos(num/denom)
 
-def calculate_likelihood(position, measured_distance, sigma_squared):
-    x, y, theta = position
-    constant = 0.0001
-    wall, min_distance_to_wall = find_relevant_wall(position, walls)
-    #n_out_of_bounds=0
-
-    if min_distance_to_wall == "particle out of bounds":
-    #    n_out_of_bounds += 1
-        likelihood = 0
-    else:
-        likelihood = exp(-1*(measured_distance-min_distance_to_wall)**2/(2*sigma_squared))
-        likelihood += constant
-        
-    #print("likelihood: calculated = "+str(min_distance_to_wall) + " vs measured = " + str(measured_distance) + "likelihood = " + str(likelihood))
-    return likelihood
-
 def calculate_likelihood_multivariate(calculated_distance_list, measure_distance_list, measurement_var):
     if len(calculated_distance_list) != len(measure_distance_list):
         print("likelihood multivariate length not equal")

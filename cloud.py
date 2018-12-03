@@ -5,6 +5,7 @@ import numpy as np
 import montecarlo as mc
 import particle
 import copy
+import random
 
 class Cloud:
     def __init__(self, n_particles=100, x=0, y=0, theta=0,
@@ -86,13 +87,13 @@ class Cloud:
             weight = random.random()
             index = 0
             while True:
-                weights -= weights[index]
-                if weights <= 0:
-                    print("picked index "+str(index)+" where weight is "+self.weight[index])
-                    new_particle.append(copy.deepcopy(self.particles[index]))
+                weight -= self.weights[index]
+                if weight <= 0:
+                    #print("particle i = "+str(i)+" picked at index "+str(index)+" where weight is "+str(self.weights[index]))
+                    new_particles.append(copy.deepcopy(self.particles[index]))
                     break
                 index += 1
-        self.particles = new_particle
+        self.particles = new_particles
         self.weights = 1.0/self.n_particles * np.ones(self.n_particles)
 
 
@@ -122,23 +123,6 @@ class Cloud:
                       particle.y+padding_y,
                       particle.theta) for particle in self.particles]
         return particles
-
-    def update_weights(self, distance_observed, measurement_sigma):
-        """
-        Update the weight matrix based on the likelihood function using
-        the measurement from the sonar.
-        """
-        new_weights = []
-        for index, particle in enumerate(self.particles):
-            new_weight = mc.calculate_likelihood(
-                            [particle.x, particle.y, particle.theta + self.sonar_angle],
-                            distance_observed,
-                            measurement_sigma)
-
-            new_weights.append(new_weight)
-
-        weights_sum = np.sum(new_weights)
-        self.weights = np.array(new_weights)/weights_sum
 
     def update_weights_batch(self, thetas, measurements, measurement_sigma):
         new_weights = []
