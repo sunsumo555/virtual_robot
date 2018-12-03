@@ -26,7 +26,9 @@ class Particle:
         self.theta += gauss(0,self.motion_sigma_angle)*(distance/40)
 
     def rotate(self, theta):
-        new_theta = self.theta + theta + gauss(0,self.rotation_sigma_angle)*(2.0*theta/pi)
+        error = gauss(0,self.rotation_sigma_angle)*(2.0*theta/pi)
+        new_theta = self.theta + theta + error
+        #print("theta = "+str(self.theta*180.0/pi)+" + theta("+str(theta*180.0/pi)+") + error("+str(error*180.0/pi)+") = "+str(new_theta*180.0/pi))
         self.theta = new_theta
 
     def renormalize_theta(self):

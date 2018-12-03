@@ -20,6 +20,9 @@ class Cloud:
                                         rotation_sigma_angle) for _ in range(self.n_particles)]
 
         self.weights = 1.0/self.n_particles * np.ones(self.n_particles)
+        self.avg_x = 0
+        self.avg_y = 0
+        self.avg_theta = 0
         self.update_average_position()
         #sonar angle will be between -180 to 180 degrees
         self.sonar_angle = 0
@@ -35,12 +38,13 @@ class Cloud:
         """
         for particle in self.particles:
             particle.rotate(theta)
-            #print("theta after rotate, before normalizing = "+str(particle.theta))
         self.update_average_position()
 
     def __str__(self):
         for p,w in zip(self.particles,self.weights):
             print("x = "+str(p.x)+", y = "+str(p.y)+", theta = "+str(p.theta*180.0/pi) + ", w = "+str(w))
+        print("-----------------------------------------")
+        print("avg_x = "+str(self.avg_x)+", y = "+str(self.avg_y)+", theta = "+str(self.avg_theta*180.0/pi))
         return str("====== done printing particles =======")
 
     def update_average_position(self):
@@ -57,7 +61,8 @@ class Cloud:
 
         self.renormalize_avg_theta()
 
-        if abs(self.avg_theta - pi) > pi/6.0:
+        if abs(self.avg_theta - pi) > pi/6.0 and abs(self.avg_theta + pi) > pi/6.0:
+            #print("renormalizing all particle thetas")
             self.renormalize_thetas()
 
     def renormalize_thetas(self):

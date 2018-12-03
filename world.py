@@ -14,45 +14,45 @@ class World:
                              starting_y = starting_y,
                              starting_theta = starting_theta,
                              n_particles = 20,
-                             motion_sigma_distance=2.0, 
+                             motion_sigma_distance=2.0,
                              motion_sigma_angle=1.0*pi/180.0,
                              rotation_sigma_angle=2.0*pi/180.0)
-        
+
         self.walls = mc.walls
         self.enlargement_factor = enlargement_factor
         self.x_padding = x_padding
         self.y_padding = y_padding
-        
+
         self.actual_x = starting_x
         self.actual_y = starting_y
         self.actual_t = 0
-        
+
         self.print_weights = True
         self.sleep_time = 2
-        
+
         #for debugging only, dont open it!
         #self.r.particle_cloud.randomize_particles(0,200,0,200, x_0=self.actual_x, y_0=self.actual_y, t_0=self.actual_t)
-        
+
         self.measurement_var = 50
-               
+
         self.draw_particles()
         self.pi = 3.14159
-        
+
         self.display = np.zeros((250*self.enlargement_factor,250*self.enlargement_factor))
 
 #============= book keeping ====================
 
     def __str__(self):
         return ">>> robot at x="+str(self.r.particle_cloud.avg_x) +" y=" +str(self.r.particle_cloud.avg_y)+" theta="+str(self.r.particle_cloud.avg_theta * 180 / self.pi)
-        
+
     def draw_map(self):
         for wall in self.walls:
-            line = (self.enlargement_factor*wall[0]+self.x_padding, 
-                    self.enlargement_factor*wall[1]+self.y_padding, 
-                    self.enlargement_factor*wall[2]+self.x_padding, 
+            line = (self.enlargement_factor*wall[0]+self.x_padding,
+                    self.enlargement_factor*wall[1]+self.y_padding,
+                    self.enlargement_factor*wall[2]+self.x_padding,
                     self.enlargement_factor*wall[3]+self.y_padding)
             cv2.line(self.display,(self.enlargement_factor*wall[0]+self.x_padding,self.enlargement_factor*wall[1]+self.y_padding),(self.enlargement_factor*wall[2]+self.x_padding,self.enlargement_factor*wall[3]+self.y_padding),255,2)
-            
+
     def draw_particles(self):
         self.display = np.zeros((250*self.enlargement_factor,250*self.enlargement_factor))
         self.draw_map()
@@ -80,7 +80,7 @@ class World:
         plt.figure()
         plt.title("moved "+str(d))
         self.display_img()
-        
+
     def rotate_robot(self,radian):
         self.r.rotate(radian)
         self.actual_t += radian
@@ -121,7 +121,7 @@ class World:
             self.rotate_robot(dtheta)
             self.move_robot_forward(10)
             self.localize_robot()
-            
+
             x,y,theta = self.r.where_am_i()
             dx = target_x - x
             dy = target_y - y
@@ -147,19 +147,18 @@ class World:
     def set_robot_at(self,x,y,theta):
         self.r.particle_cloud.set_position(x,y,theta)
         plt.figure()
-        plt.title("set rotot at x = "+str(x)+", y = "+str(y)+", theta = "+str(theta*180.0/pi))
+        plt.title("set robot at x = "+str(x)+", y = "+str(y)+", theta = "+str(theta*180.0/pi))
         self.display_img()
 
     def rotate_robot_to(self,theta):
         self.r.rotate(theta - self.r.particle_cloud.avg_theta)
 
     def measure_around(self,points = 120):
+        original_bearing = self.r.particle_cloud.avg_theta
         measurements = []
         thetas = np.linspace(-1*pi,pi*(1.0-2.0/points),points)
-        self.r.rotate(-1*pi)
         for theta in thetas:
-            self.r.rotate(pi*2.0/points)
-            print(self.r)
+            self.rotate_robot_to(theta+original_bearing)
             measurements.append(self.r.measure())
-        self.r.rotate(-1*pi*(1.0-2.0/points))
+        self.rotate_robot_to(original_bearing)
         return measurements

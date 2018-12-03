@@ -50,11 +50,14 @@ def find_robust_sum_of_squares_error(a,b):
         ans += i**2
     return ans
 
-def find_hamming_error(a,b):
+def find_hamming_error(a,b,tol = 5):
     c = np.array(a)-np.array(b)
+    #print(c)
     count = 0
-    for element in c:
-        if abs(element) < 5:
+    for (element,i) in zip(c,b):
+        if(i==255):
+            continue
+        if abs(element) > tol:
             count += 1
     return count
 
@@ -64,6 +67,7 @@ def recognize_place(measured_histogram):
     for i,histogram in enumerate(ground_truth_histograms):
         histogram = np.array(histogram)
         error = find_sum_of_squares_error(np.array(histogram[:-2]),np.array(measured_histogram[:-2]))
+        #error = find_hamming_error(np.array(histogram[:-2]),np.array(measured_histogram[:-2]),tol = 5)
         if error < min_error:
             min_error = error
             min_index = i
@@ -74,14 +78,14 @@ def find_orientation(measured,index):
     min_angle = 0
     ground_truth_measurement = np.array(ground_truth_measurements[index])
     for i in range(len(ground_truth_measurements[index])):
-        shifted_graph = np.roll(ground_truth_measurement,i)
-        print(shifted_graph)
-        print(measured)
-        error = find_robust_sum_of_squares_error(np.array(shifted_graph),np.array(measured))
-        print("sse for angle "+str(i*3.0)+" = "+str(error))
+        shifted_graph = np.roll(ground_truth_measurement,-1*i)
+        error = find_hamming_error(np.array(shifted_graph),np.array(measured),tol = 5)
+        #print("sse for angle "+str(i*3.0)+" = "+str(error))
         if error < min_error:
             min_error = error
             min_angle = i*3.0*pi/180.0
     if min_angle > pi:
         min_angle -= 2*pi
+    if min_angle < -1*pi:
+        min_angle += 2*pi
     return min_angle
