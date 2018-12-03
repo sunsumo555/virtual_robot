@@ -9,10 +9,10 @@ class Map:
     def __init__(self,starting_x=0, starting_y=0, enlargement_factor = 1, x_padding = 0, y_padding = 0):
         self.r = robot.Robot(starting_x = starting_x,
                              starting_y = starting_y,
-                             n_particles = 20,
-                             motion_sigma_distance=0.01,
-                             motion_sigma_angle=0.001,
-                             rotation_sigma_angle=0.001)
+                             n_particles = 100,
+                             motion_sigma_distance=2.0, 
+                             motion_sigma_angle=1.0*pi/180.0,
+                             rotation_sigma_angle=2.0*pi/180.0)
 
         self.walls = mc.walls
         self.enlargement_factor = enlargement_factor

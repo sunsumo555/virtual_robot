@@ -5,10 +5,12 @@ import numpy as np
 import cloud
 import random
 import montecarlo as mc
+from math import pi
 
 class Robot:
 
-    def __init__(self,starting_x=0, starting_y=0, n_particles=100, motion_sigma_distance=0, motion_sigma_angle=0, rotation_sigma_angle=0):
+    def __init__(self,starting_x=0, starting_y=0, n_particles=100, motion_sigma_distance=2.0, 
+        motion_sigma_angle=1.0*pi/180.0,rotation_sigma_angle=2.0*pi/180.0):
         # register starting position
         self.particle_cloud = cloud.Cloud(x = starting_x, y = starting_y,
                                             n_particles = n_particles,

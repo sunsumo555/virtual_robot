@@ -7,8 +7,8 @@ import particle
 
 class Cloud:
     def __init__(self, n_particles=100, x=0, y=0, theta=0,
-                 motion_sigma_distance=0.1, motion_sigma_angle=0.005,
-                 rotation_sigma_angle=0.05):
+                 motion_sigma_distance=2.0, motion_sigma_angle=1.0*pi/180.0,
+                 rotation_sigma_angle=2.0*pi/180.0):
         self.n_particles = n_particles
         self.particles = [particle.Particle(x,
                                         y,
@@ -16,15 +16,60 @@ class Cloud:
                                         motion_sigma_distance,
                                         motion_sigma_angle,
                                         rotation_sigma_angle) for _ in range(self.n_particles)]
+
         self.weights = 1.0/self.n_particles * np.ones(self.n_particles)
         self.update_average_position()
         #sonar angle will be between -180 to 180 degrees
         self.sonar_angle = 0
 
+    def drive(self, distance):
+        for particle in self.particles:
+            particle.drive(distance)
+        self.update_average_position()
+
+    def rotate(self, theta):
+        """
+        rotate the particle cloud
+        """
+        for particle in self.particles:
+            particle.rotate(theta)
+            #print("theta after rotate, before normalizing = "+str(particle.theta))
+        self.update_average_position()
+
     def __str__(self):
         for p in self.particles:
             print(p)
         return "====== done printing particles ======="
+
+    def update_average_position(self):
+        """
+        Update the average postion of the particle cloud
+        """
+        x_vector = np.array([p.x for p in self.particles])
+        y_vector = np.array([p.y for p in self.particles])
+        theta_vector = np.array([p.theta for p in self.particles])
+
+        self.avg_x = self.weights.dot(x_vector)
+        self.avg_y = self.weights.dot(y_vector)
+        self.avg_theta = self.weights.dot(theta_vector)
+
+        self.renormalize_avg_theta()
+
+        if abs(self.avg_theta - pi) > pi/6.0:
+            self.renormalize_thetas()
+
+    def renormalize_thetas(self):
+        for p in self.particles:
+            p.renormalize_theta()
+
+    def renormalize_avg_theta(self):
+        while self.avg_theta > pi:
+            self.avg_theta -= 2*pi
+
+        while self.avg_theta <= -1*pi:
+            self.avg_theta += 2*pi
+
+#========================================
 
     def randomize_particles(self,x_lower_bound,x_upper_bound,y_lower_bound,y_upper_bound, x_0=10, y_0=10, t_0=0):
         i = 0
@@ -50,20 +95,6 @@ class Cloud:
                       particle.y+padding_y,
                       particle.theta) for particle in self.particles]
         return particles
-
-    def drive(self, distance):
-        for particle in self.particles:
-            particle.drive(distance)
-        self.update_average_position()
-
-    def rotate(self, theta):
-        """
-        rotate the particle cloud
-        """
-        for particle in self.particles:
-            particle.rotate(theta)
-            #print("theta after rotate, before normalizing = "+str(particle.theta))
-        self.update_average_position()
 
     def update_weights(self, distance_observed, measurement_sigma):
         """
@@ -150,33 +181,6 @@ class Cloud:
 
     def resample_np(self):
         self.particles = np.random.choice(self.particles, self.n_particles ,p=self.weights)
-
-    def renormalize_avg_theta(self):
-        while self.avg_theta > pi:
-            self.avg_theta -= 2*pi
-
-        while self.avg_theta <= -1*pi:
-            self.avg_theta += 2*pi
-
-    def renormalize_thetas(self):
-        for p in self.particles:
-            p.renormalize_theta()
-
-    def update_average_position(self):
-        """
-        Update the average postion of the particle cloud
-        """
-        x_vector = np.array([particle.x for particle in self.particles])
-        y_vector = np.array([particle.y for particle in self.particles])
-        theta_vector = np.array([particle.theta for particle in self.particles])
-
-        self.avg_x = self.weights.dot(x_vector)
-        self.avg_y = self.weights.dot(y_vector)
-        self.avg_theta = self.weights.dot(theta_vector)
-        self.renormalize_avg_theta()
-
-        if abs(self.avg_theta - pi) > pi/6.0:
-            self.renormalize_thetas()
 
     def resample(self):
         #print("RESAMPLING")
