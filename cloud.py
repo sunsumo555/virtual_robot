@@ -40,7 +40,7 @@ class Cloud:
 
     def __str__(self):
         for p,w in zip(self.particles,self.weights):
-            print("x = "+str(p.x)+", y = "+str(p.y)+", theta = "+str(p.theta) + ", w = "+str(w))
+            print("x = "+str(p.x)+", y = "+str(p.y)+", theta = "+str(p.theta*180.0/pi) + ", w = "+str(w))
         return str("====== done printing particles =======")
 
     def update_average_position(self):
@@ -67,7 +67,6 @@ class Cloud:
     def renormalize_avg_theta(self):
         while self.avg_theta > pi:
             self.avg_theta -= 2*pi
-
         while self.avg_theta <= -1*pi:
             self.avg_theta += 2*pi
 
@@ -96,6 +95,15 @@ class Cloud:
         self.particles = new_particles
         self.weights = 1.0/self.n_particles * np.ones(self.n_particles)
 
+#-----------------cw6-----------------------
+
+    def set_position(self,x,y,theta):
+        for p in self.particles:
+            p.x = x
+            p.y = y
+            p.theta = theta
+        self.update_average_position()
+        self.weights = 1.0/self.n_particles * np.ones(self.n_particles)
 
 #========================================
 

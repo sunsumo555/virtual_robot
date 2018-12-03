@@ -15,7 +15,7 @@ class Particle:
         self.rotation_sigma_angle = rotation_sigma_angle
 
     def __str__(self):
-        return "x = "+str(self.x)+", y = "+str(self.y)+", theta = "+str(self.theta)
+        return "x = "+str(self.x)+", y = "+str(self.y)+", theta = "+str(self.theta*180.0/pi)
 
     def drive(self, distance):
         noisy_distance = distance + gauss(0,self.motion_sigma_distance)*(distance/40)

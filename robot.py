@@ -21,7 +21,7 @@ class Robot:
         self.measurement_sigma = 3
 
     def __str__(self):
-        return "robot at x = "+str(self.particle_cloud.avg_x)+", y = "+str(self.particle_cloud.avg_y)+" theta = "+str(self.particle_cloud.avg_theta)
+        return "robot at x = "+str(self.particle_cloud.avg_x)+", y = "+str(self.particle_cloud.avg_y)+" theta = "+str(self.particle_cloud.avg_theta/pi*180.0)
 
     def rotate_sonar_by(self,theta):
         #-1 is used so that the positive angle is ccw

@@ -6,6 +6,7 @@ import numpy as np
 import robot
 import math
 from math import pi, atan2
+import landmarks as lm
 
 class World:
     def __init__(self,starting_x=0, starting_y=0, starting_theta=0, enlargement_factor = 1, x_padding = 0, y_padding = 0):
@@ -38,6 +39,39 @@ class World:
         self.pi = 3.14159
         
         self.display = np.zeros((250*self.enlargement_factor,250*self.enlargement_factor))
+
+#============= book keeping ====================
+
+    def __str__(self):
+        return ">>> robot at x="+str(self.r.particle_cloud.avg_x) +" y=" +str(self.r.particle_cloud.avg_y)+" theta="+str(self.r.particle_cloud.avg_theta * 180 / self.pi)
+        
+    def draw_map(self):
+        for wall in self.walls:
+            line = (self.enlargement_factor*wall[0]+self.x_padding, 
+                    self.enlargement_factor*wall[1]+self.y_padding, 
+                    self.enlargement_factor*wall[2]+self.x_padding, 
+                    self.enlargement_factor*wall[3]+self.y_padding)
+            cv2.line(self.display,(self.enlargement_factor*wall[0]+self.x_padding,self.enlargement_factor*wall[1]+self.y_padding),(self.enlargement_factor*wall[2]+self.x_padding,self.enlargement_factor*wall[3]+self.y_padding),255,2)
+            
+    def draw_particles(self):
+        self.display = np.zeros((250*self.enlargement_factor,250*self.enlargement_factor))
+        self.draw_map()
+        if self.print_weights:
+            max_w = np.max(self.r.particle_cloud.weights)
+            for p,w in zip(self.r.particle_cloud.particles,self.r.particle_cloud.weights):
+                #print("displaying at x=",int(self.enlargement_factor*p.x + self.x_padding),"y =",int(self.enlargement_factor*p.y + self.y_padding))
+                cv2.circle(self.display,(int(self.enlargement_factor*p.x + self.x_padding),int(self.enlargement_factor*p.y + self.y_padding)), 3*self.enlargement_factor, int(w/max_w*255), -1)
+
+        else:
+            print_vector = [(p.x + self.x_padding, p.y + self.y_padding, p.theta) for p in self.r.particle_cloud.particles]
+            cv2.circle(self.display,(self.enlargement_factor*p.x + self.x_padding,self.enlargement_factor*p.y + self.y_padding), 255, -1)
+
+    def display_img(self):
+        self.draw_map()
+        self.draw_particles()
+        plt.imshow(self.display)
+
+# ==============================================
 
     def move_robot_forward(self,d):
         self.r.drive(d)
@@ -82,7 +116,7 @@ class World:
         dtheta = target_theta - theta
 
         while distance > 10:
-            print("world: distance = "+str(distance))        
+            print("world: distance = "+str(distance))
 
             self.rotate_robot(dtheta)
             self.move_robot_forward(10)
@@ -95,72 +129,37 @@ class World:
             target_theta = atan2(dy,dx)
             dtheta = target_theta - theta
             print("destination at "+str(target_x)+", "+str(target_y))
-            print(self.r)    
+            print(self.r)
 
         self.move_robot_forward(distance)
 
 #------------------- cw6 -------------
-def rotate_robot_to(self,theta):
-    self.rotate_robot(theta - self.r.particle_cloud.avg_theta)
 
-def measure_around(self,points = 120):
-    measurements = []
-    thetas = np.linspace(-1*pi,pi*(1.0-2.0/points),points)
-    for theta in thetas:
-        self.rotate_robot_to(theta)
-        measurements.append(self.r.measure())
-    return measurements
+    def find_landmark_and_orientation(self):
+        measurements = self.measure_around()
+        measured_hist, bins = np.histogram(measurements,bins = np.linspace(0,250,26))
+        lm_index = lm.recognize_place(measured_hist)
+        orientation = lm.find_orientation(measurements,lm_index)
+        x,y = lm.positions[lm_index]
+        self.set_robot_at(x,y,orientation)
+        return lm_index,orientation
 
-def find_landmark
+    def set_robot_at(self,x,y,theta):
+        self.r.particle_cloud.set_position(x,y,theta)
+        plt.figure()
+        plt.title("set rotot at x = "+str(x)+", y = "+str(y)+", theta = "+str(theta*180.0/pi))
+        self.display_img()
 
+    def rotate_robot_to(self,theta):
+        self.r.rotate(theta - self.r.particle_cloud.avg_theta)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-#============= book keeping ====================
-
-    def __str__(self):
-        return ">>> robot at x="+str(self.r.particle_cloud.avg_x) +" y=" +str(self.r.particle_cloud.avg_y)+" theta="+str(self.r.particle_cloud.avg_theta * 180 / self.pi)
-        
-    def draw_map(self):
-        for wall in self.walls:
-            line = (self.enlargement_factor*wall[0]+self.x_padding, 
-                    self.enlargement_factor*wall[1]+self.y_padding, 
-                    self.enlargement_factor*wall[2]+self.x_padding, 
-                    self.enlargement_factor*wall[3]+self.y_padding)
-            cv2.line(self.display,(self.enlargement_factor*wall[0]+self.x_padding,self.enlargement_factor*wall[1]+self.y_padding),(self.enlargement_factor*wall[2]+self.x_padding,self.enlargement_factor*wall[3]+self.y_padding),255,2)
-            
-    def draw_particles(self):
-        self.display = np.zeros((250*self.enlargement_factor,250*self.enlargement_factor))
-        self.draw_map()
-        if self.print_weights:
-            max_w = np.max(self.r.particle_cloud.weights)
-            for p,w in zip(self.r.particle_cloud.particles,self.r.particle_cloud.weights):
-                #print("displaying at x=",int(self.enlargement_factor*p.x + self.x_padding),"y =",int(self.enlargement_factor*p.y + self.y_padding))
-                cv2.circle(self.display,(int(self.enlargement_factor*p.x + self.x_padding),int(self.enlargement_factor*p.y + self.y_padding)), 3*self.enlargement_factor, int(w/max_w*255), -1)
-
-        else:
-            print_vector = [(p.x + self.x_padding, p.y + self.y_padding, p.theta) for p in self.r.particle_cloud.particles]
-            cv2.circle(self.display,(self.enlargement_factor*p.x + self.x_padding,self.enlargement_factor*p.y + self.y_padding), 255, -1)
-
-    def display_img(self):
-        self.draw_map()
-        self.draw_particles()
-        plt.imshow(self.display)
+    def measure_around(self,points = 120):
+        measurements = []
+        thetas = np.linspace(-1*pi,pi*(1.0-2.0/points),points)
+        self.r.rotate(-1*pi)
+        for theta in thetas:
+            self.r.rotate(pi*2.0/points)
+            print(self.r)
+            measurements.append(self.r.measure())
+        self.r.rotate(-1*pi*(1.0-2.0/points))
+        return measurements

@@ -15,15 +15,15 @@ ground_truth_measurements = [[84.0, 84.11527706382536, 84.46269548333538, 85.047
                              [54.0, 54.074106683887734, 54.297447096429885, 54.67311679255216, 55.20639212271158, 55.904913742144494, 56.778960108866436, 57.84182965639957, 59.11035903932653, 60.605616832255485, 62.353829072479584, 64.38761781314115, 66.74767078498864, 177.5728200932571, 185.69731668567988, 195.16147160748713, 206.23776388131597, 216.17560707005214, 207.65942021996466, 200.31703319643918, 193.98969044771428, 188.55080792257263, 183.89889478901586, 179.95235893102088, 176.64565367202889, 173.92639830889397, 171.7532199373249, 170.0941411323845, 168.92539096667076, 168.23055412765072, 168.0, 168.23055412765072, 168.92539096667076, 170.0941411323845, 171.7532199373249, 173.92639830889397, 176.6456536720289, 83.71284328876011, 73.75780006722714, 66.080677937558, 60.000000000000014, 55.08235376329991, 51.03904850112239, 47.67047187197249, 44.83429649593827, 42.426406871192846, 40.368981888191286, 38.60278697679503, 37.082039324993694, 35.77089878507842, 34.641016151377556, 33.66978712903082, 32.8390883551814, 32.13434980911087, 31.543866727148018, 31.058285412302492, 30.67021784595088, 30.373953773640086, 30.165248386905493, 30.04117037993763, 30.0, 30.04117037993763, 30.16524838690549, 30.373953773640086, 30.670217845950877, 31.05828541230249, 31.543866727148018, 32.134349809110866, 32.839088355181396, 33.66978712903082, 34.64101615137754, 35.770898785078415, 37.082039324993694, 38.60278697679502, 40.36898188819127, 42.426406871192846, 44.83429649593825, 47.67047187197246, 51.03904850112239, 50.07925829910982, 48.49742261192857, 47.13770198064316, 45.97472369725398, 44.98808973275522, 44.16141341800723, 43.4815995772235, 42.93830498433123, 42.52353528309612, 42.23134774166769, 42.05763853191268, 42.0, 42.05763853191267, 42.23134774166768, 42.52353528309612, 42.93830498433122, 43.481599577223484, 44.16141341800722, 44.988089732755206, 45.97472369725396, 47.13770198064315, 48.49742261192854, 50.079258299109775, 51.914855054991165, 54.04390176751299, 56.51657464346778, 59.39696961966999, 62.76801509431352, 66.73866062076145, 66.74767078498864, 64.38761781314119, 62.35382907247959, 60.605616832255485, 59.110359039326546, 57.84182965639957, 56.778960108866436, 55.9049137421445, 55.206392122711584, 54.67311679255216, 54.297447096429885, 54.074106683887734]]
 
 ground_truth_histograms = [[ 0,  0,  0, 27,  8,  5,  3,  2, 16,  4,  7,  6, 11, 10,  6,  5,  1,
-        0,  7,  2,  0,  0,  0,  0,  0],
+        0,  7,  2,  0,  0,  0,  0, 0],
                            [ 0,  0, 30, 31,  9, 15,  2,  1,  1,  0,  1,  0,  1,  2,  1,  1,  9,
-        7,  4,  3,  2,  0,  0,  0],
+        7,  4,  3,  2,  0,  0,  0, 0],
                            [ 0,  0, 30, 23,  6, 20,  3,  3,  1,  2,  1,  2,  2,  2,  1,  2, 13,
-        5,  2,  2,  0,  0,  0,  0],
+        5,  2,  2,  0,  0,  0,  0, 0],
                            [ 0,  0,  0,  1,  9, 24, 23, 13,  4,  4,  3,  0,  9, 12, 13,  4,  1,
-        0,  0,  0,  0,  0,  0,  0],
+        0,  0,  0,  0,  0,  0,  0, 0],
                            [ 0,  0, 15, 25, 25, 25,  5,  1,  0,  0,  0,  0,  0,  0,  0,  9,  7,
-        3,  2,  3,  0,  0,  0,  0]]
+        3,  2,  3,  0,  0,  0,  0, 0]]
 
 def get_ground_truth(landmark_index,points = 120):
     measurements = []
@@ -35,16 +35,34 @@ def get_ground_truth(landmark_index,points = 120):
 
 def get_ground_truth_histograms(landmark_index, points = 120):
     ground_truth = get_ground_truth(landmark_index,points)
-    histogram, bins = np.np.histogram(ground_truth,bins = np.linspace(0,250,26))
+    histogram, bins = np.histogram(ground_truth,bins = np.linspace(0,250,26))
     return histogram
 
 def find_sum_of_squares_error(a,b):
-    return np.sum((np.array(histogram[:-2])-np.array(measured_histogram[:-2]))**2)
+    return np.sum((np.array(a)-np.array(b))**2)
+
+def find_robust_sum_of_squares_error(a,b):
+    c = np.array(a)-np.array(b)
+    ans = 0
+    for i,j in zip(c,b):
+        if(j==255):
+            continue
+        ans += i**2
+    return ans
+
+def find_hamming_error(a,b):
+    c = np.array(a)-np.array(b)
+    count = 0
+    for element in c:
+        if abs(element) < 5:
+            count += 1
+    return count
 
 def recognize_place(measured_histogram):
     min_error = 9999
     min_index = 0
     for i,histogram in enumerate(ground_truth_histograms):
+        histogram = np.array(histogram)
         error = find_sum_of_squares_error(np.array(histogram[:-2]),np.array(measured_histogram[:-2]))
         if error < min_error:
             min_error = error
@@ -54,12 +72,16 @@ def recognize_place(measured_histogram):
 def find_orientation(measured,index):
     min_error = 9999
     min_angle = 0
+    ground_truth_measurement = np.array(ground_truth_measurements[index])
     for i in range(len(ground_truth_measurements[index])):
-        shifted_graph = np.roll(ground_truth_measurements[index],i)
-        error = find_sum_of_squares_error(np.array(shifted_graph),np.array(measured))
+        shifted_graph = np.roll(ground_truth_measurement,i)
+        print(shifted_graph)
+        print(measured)
+        error = find_robust_sum_of_squares_error(np.array(shifted_graph),np.array(measured))
+        print("sse for angle "+str(i*3.0)+" = "+str(error))
         if error < min_error:
             min_error = error
-            min_angle = i*3.0/pi
+            min_angle = i*3.0*pi/180.0
     if min_angle > pi:
         min_angle -= 2*pi
     return min_angle
