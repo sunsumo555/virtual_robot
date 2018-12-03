@@ -137,8 +137,7 @@ class World:
 
     def find_landmark_and_orientation(self):
         measurements = self.measure_around()
-        measured_hist, bins = np.histogram(measurements,bins = np.linspace(0,250,26))
-        lm_index = lm.recognize_place(measured_hist)
+        lm_index = lm.recognize_place(measurements)
         orientation = lm.find_orientation(measurements,lm_index)
         x,y = lm.positions[lm_index]
         self.set_robot_at(x,y,orientation)

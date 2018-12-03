@@ -61,9 +61,29 @@ def find_hamming_error(a,b,tol = 5):
             count += 1
     return count
 
-def recognize_place(measured_histogram):
+def distinguish_1_2(measured):
+    min_error = 9999
+    min_index = 1
+    #find the min error for landmark 1
+    ground_truth_measurement = np.array(ground_truth_measurements[1])
+    for i in range(len(ground_truth_measurements[1])):
+        shifted_graph = np.roll(ground_truth_measurement,-1*i)
+        error = find_hamming_error(np.array(shifted_graph),np.array(measured),tol = 5)
+        if error < min_error:
+            min_error = error
+    #find the min error for landmark 2
+    ground_truth_measurement = np.array(ground_truth_measurements[2])
+    for i in range(len(ground_truth_measurements[2])):
+        shifted_graph = np.roll(ground_truth_measurement,-1*i)
+        error = find_hamming_error(np.array(shifted_graph),np.array(measured),tol = 5)
+        if error < min_error:
+            return 2
+    return 1
+
+def recognize_place(measurements):
     min_error = 9999
     min_index = 0
+    measured_histogram, bins = np.histogram(measurements,bins = np.linspace(0,250,26))
     for i,histogram in enumerate(ground_truth_histograms):
         histogram = np.array(histogram)
         error = find_sum_of_squares_error(np.array(histogram[:-2]),np.array(measured_histogram[:-2]))
@@ -71,6 +91,8 @@ def recognize_place(measured_histogram):
         if error < min_error:
             min_error = error
             min_index = i
+    if min_index == 1 or min_index == 2:
+        min_index = distinguish_1_2(measurements)
     return min_index
 
 def find_orientation(measured,index):
